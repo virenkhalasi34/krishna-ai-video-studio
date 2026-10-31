@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Krishna AI Video Studio</title>
+<style>
+*{box-sizing:border-box}
+body{
+ margin:0;
+ background:#101225;
+ color:white;
+ font-family:Arial,sans-serif;
+ padding:20px;
+}
+header{text-align:center;padding:25px 0}
+h1{color:#b5a5ff;font-size:30px}
+p{color:#c3c4d5}
+.card{
+ max-width:600px;
+ margin:20px auto;
+ padding:22px;
+ background:#20233c;
+ border-radius:18px;
+}
+button{
+ width:100%;
+ padding:15px;
+ margin-top:12px;
+ background:#8065ef;
+ border:0;
+ border-radius:10px;
+ color:white;
+ font-size:17px;
+}
+textarea,input,select{
+ width:100%;
+ padding:13px;
+ margin:10px 0;
+ border-radius:9px;
+ border:1px solid #555;
+ background:#11152a;
+ color:white;
+}
+video{width:100%;margin-top:15px}
+.hidden{display:none}
+</style>
+</head>
+<body>
+
+<header>
+<h1>🦚 Krishna AI Video Studio</h1>
+<p>Create Your Own AI Videos</p>
+</header>
+
+<div class="card">
+<h2>✍️ Text to Video</h2>
+<textarea id="prompt"
+placeholder="Describe your video..."></textarea>
+<button onclick="generateText()">
+Generate AI Video
+</button>
+</div>
+
+<div class="card">
+<h2>🖼️ Photo to Video</h2>
+<input type="file" id="photo" accept="image/*">
+<textarea id="motion"
+placeholder="Describe video motion..."></textarea>
+<button onclick="generateImage()">
+Generate From Photo
+</button>
+</div>
+
+<div class="card hidden" id="result">
+<h2>Your AI Video</h2>
+<video id="player" controls></video>
+<a id="download" download="ai-video.mp4">
+<button>Download Video</button>
+</a>
+</div>
+
+<p style="text-align:center">
+Made with Krishna AI Video Studio ❤️
+</p>
+
+<script>
+/* Backend जोड़ने के बाद यहाँ उसका HTTPS URL डालें */
+const API_BASE = "";
+
+async function generateText(){
+ const prompt=document.getElementById("prompt").value.trim();
+ if(!prompt){alert("Please enter a prompt");return;}
+ await generate("/api/generate/text",{
+   prompt:prompt
+ });
+}
+
+async function generateImage(){
+ const file=document.getElementById("photo").files[0];
+ if(!file){alert("Please select a photo");return;}
+ const data=new FormData();
+ data.append("image",file);
+ data.append("prompt",
+ document.getElementById("motion").value);
+ await send("/api/generate/image",data);
+}
+
+async function generate(path,values){
+ const data=new FormData();
+ Object.entries(values).forEach(([k,v])=>data.append(k,v));
+ await send(path,data);
+}
+
+async function send(path,data){
+ if(!API_BASE){
+  alert("AI Backend अभी Connect नहीं हुआ है। अगला चरण पूरा करने पर वीडियो Generate होगा।");
+  return;
+ }
+ try{
+  const response=await fetch(API_BASE+path,{
+   method:"POST",body:data
+  });
+  if(!response.ok)throw new Error("Video generation failed");
+  const blob=await response.blob();
+  const url=URL.createObjectURL(blob);
+  document.getElementById("player").src=url;
+  document.getElementById("download").href=url;
+  document.getElementById("result").classList.remove("hidden");
+ }catch(e){alert(e.message);}
+}
+</script>
+
+</body>
+</html>
